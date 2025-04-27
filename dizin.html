@@ -1,0 +1,308 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TABELA Oyunu - Uzun Soluklu Koşu!</title>
+    <style>
+        /* Google Fonts */
+        @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
+        /* ... Diğer CSS kodları öncekiyle aynı ... */
+        body { font-family: 'Press Start 2P', cursive; background-color: #1a1a1a; color: #fff; display: flex; justify-content: center; align-items: center; min-height: 100vh; margin: 0; overflow: hidden; }
+        #game-container { border: 5px solid #444; background-color: #000; padding: 20px; text-align: center; box-shadow: 0 0 15px rgba(255, 255, 255, 0.3); min-width: 650px; max-width: 90%; }
+        .screen { display: none; flex-direction: column; align-items: center; padding: 20px; min-height: 450px; box-sizing: border-box; }
+        .screen.active { display: flex; }
+        h1, h2 { color: #ffcc00; text-shadow: 2px 2px #ff0000; margin-bottom: 20px; line-height: 1.4; }
+        h1 { font-size: 1.5em; } h2 { font-size: 1.2em; }
+        #logo { font-size: 3em; margin-bottom: 30px; color: #00ffff; text-shadow: 3px 3px #ff00ff; }
+        label { display: block; margin-bottom: 10px; font-size: 0.8em; color: #ccc; }
+        input[type="text"] { font-family: 'Press Start 2P', cursive; padding: 10px; border: 3px solid #55f; background-color: #222; color: #fff; font-size: 1em; margin-bottom: 20px; width: 80%; max-width: 300px; text-align: center; }
+        button { font-family: 'Press Start 2P', cursive; padding: 12px 25px; font-size: 1em; cursor: pointer; background-color: #00cc00; color: #fff; border: 3px solid #008800; text-shadow: 1px 1px #000; margin: 5px; transition: background-color 0.2s; }
+        button:hover { background-color: #00ff00; } button:active { transform: translateY(2px); }
+        #product-selection { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 15px; max-width: 600px; width: 100%; margin: 20px auto; }
+        .product-box { border: 3px solid #ff9900; padding: 10px; cursor: pointer; background-color: #333; transition: background-color 0.2s, transform 0.1s; font-size: 0.7em; line-height: 1.4; min-height: 60px; display: flex; align-items: center; justify-content: flex-start; gap: 8px; }
+        .product-box:hover { background-color: #555; transform: scale(1.05); }
+        .product-icon { display: inline-block; flex-shrink: 0; vertical-align: middle; image-rendering: pixelated; image-rendering: crisp-edges; }
+        .product-box span { flex-grow: 1; text-align: left; }
+        #game-screen { position: relative; }
+        #gameCanvas { border: 3px solid #fff; display: block; margin: 0 auto; background-color: #87CEEB; image-rendering: pixelated; image-rendering: crisp-edges; }
+        #timerDisplay { position: absolute; top: 10px; right: 10px; font-size: 1.2em; color: #ffcc00; background-color: rgba(0, 0, 0, 0.7); padding: 5px 10px; border: 2px solid #ffcc00; z-index: 10; }
+        #collectibleCounter { position: absolute; top: 10px; left: 10px; font-size: 1em; color: #00ff00; background-color: rgba(0, 0, 0, 0.7); padding: 5px 10px; border: 2px solid #00ff00; z-index: 10; transition: transform 0.1s ease-out, background-color 0.1s, color 0.1s, border-color 0.1s; }
+        #collectibleCounter.flash { background-color: #ffff00; color: #000000; border-color: #ffffff; transform: scale(1.15); }
+        #leaderboard-screen h2 { margin-bottom: 15px; }
+        #leaderboard-table { width: 100%; max-width: 500px; margin-top: 10px; border-collapse: collapse; font-size: 0.8em; }
+        #leaderboard-table th, #leaderboard-table td { border: 2px solid #aaa; padding: 8px; text-align: left; }
+        #leaderboard-table th { background-color: #444; color: #ffcc00; }
+        #leaderboard-table td:first-child { width: 40px; text-align: center; color: #ddd; }
+        #leaderboard-table td:nth-child(2) { color: #fff; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 200px; }
+        #leaderboard-table td:nth-child(3) { width: 70px; text-align: right; color: #0f0; }
+        #leaderboard-table td:last-child { width: 80px; text-align: center; color: #0ff; }
+        #leaderboard-buttons { margin-top: 25px; }
+        #gameOverMessage { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); background-color: rgba(0, 0, 0, 0.85); color: #ff0000; padding: 30px 40px; border: 4px solid #ff0000; text-align: center; font-size: 1.8em; z-index: 20; display: none; text-shadow: 2px 2px #000; border-radius: 10px; }
+        #gameOverMessage span { display: block; font-size: 0.7em; color: #ffff00; margin-top: 15px; }
+    </style>
+</head>
+<body>
+     <!-- HTML Yapısı -->
+     <div id="game-container">
+        <div id="name-screen" class="screen active"><h1>TABELA Oyunu</h1><h2>Lütfen Adınızı ve Soyadınızı Girin</h2><label for="playerNameInput">Ad Soyad:</label><input type="text" id="playerNameInput" maxlength="20" placeholder="Oyuncu Adı"><button id="submitNameBtn">Onayla</button></div>
+        <div id="product-screen" class="screen"><div id="logo">TABELA</div><h2>Lütfen Bir Ürün Seçin</h2><div id="product-selection"><div class="product-box" data-product="Ticari Kart"><canvas class="product-icon" width="24" height="20" data-product="Ticari Kart"></canvas><span>Ticari Kart</span></div><div class="product-box" data-product="Tahsil Çeki"><canvas class="product-icon" width="24" height="20" data-product="Tahsil Çeki"></canvas><span>Tahsil Çeki</span></div><div class="product-box" data-product="Ödeme Çeki"><canvas class="product-icon" width="24" height="20" data-product="Ödeme Çeki"></canvas><span>Ödeme Çeki</span></div><div class="product-box" data-product="Üye İşyeri"><canvas class="product-icon" width="24" height="20" data-product="Üye İşyeri"></canvas><span>Üye İşyeri</span></div><div class="product-box" data-product="Dış Ticaret"><canvas class="product-icon" width="24" height="20" data-product="Dış Ticaret"></canvas><span>Dış Ticaret</span></div><div class="product-box" data-product="DBS"><canvas class="product-icon" width="24" height="20" data-product="DBS"></canvas><span>DBS</span></div></div></div>
+        <div id="game-screen" class="screen"><canvas id="gameCanvas" width="600" height="400"></canvas><div id="timerDisplay">Süre: 0.0s</div><div id="collectibleCounter">Ürün: 0</div><div id="gameOverMessage">OYUN BİTTİ!<span></span></div></div>
+        <div id="leaderboard-screen" class="screen"><h2>Liderlik Tablosu</h2><table id="leaderboard-table"><thead><tr><th>Sıra</th><th>Oyuncu</th><th>Süre</th><th>Toplanan</th></tr></thead><tbody id="leaderboard-body"></tbody></table><div id="leaderboard-buttons"><button id="playAgainBtn">Tekrar Oyna</button><button id="quitBtn">Ana Menü</button></div></div>
+    </div>
+
+    <script>
+        // --- DOM Elementleri ---
+        const nameScreen = document.getElementById('name-screen');
+        const productScreen = document.getElementById('product-screen');
+        const gameScreen = document.getElementById('game-screen');
+        const leaderboardScreen = document.getElementById('leaderboard-screen');
+        const playerNameInput = document.getElementById('playerNameInput');
+        const submitNameBtn = document.getElementById('submitNameBtn');
+        const productBoxes = document.querySelectorAll('.product-box');
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+        const timerDisplay = document.getElementById('timerDisplay');
+        const collectibleCounterDisplay = document.getElementById('collectibleCounter');
+        const gameOverMessageDiv = document.getElementById('gameOverMessage');
+        const leaderboardBody = document.getElementById('leaderboard-body');
+        const playAgainBtn = document.getElementById('playAgainBtn');
+        const quitBtn = document.getElementById('quitBtn');
+        const productIcons = document.querySelectorAll('.product-icon');
+
+        // --- Oyun Değişkenleri ---
+        let playerName = '';
+        let selectedProduct = '';
+        let startTime = 0;
+        let endTime = 0;
+        let gameInterval = null;
+        let isGameOver = false;
+        // Zorluk Artış Zamanları (ms)
+        let difficultyIncreaseTime1 = 45 * 1000; // 45sn
+        let difficultyIncreaseTime2 = 90 * 1000; // 90sn (1.5dk)
+        let difficultyIncreaseTime3 = 110 * 1000; // 110sn (sona doğru)
+        // Zorluk Artış Bayrakları
+        let difficultyIncreased1 = false;
+        let difficultyIncreased2 = false;
+        let difficultyIncreased3 = false;
+        // Hız Çarpanları
+        const difficultyMultiplier1 = 1.3; // İlk artış çarpanı
+        const difficultyMultiplier2 = 1.4; // İkinci artış çarpanı
+        const difficultyMultiplier3 = 1.5; // Üçüncü (son) artış çarpanı
+
+        let lastFrameTime = 0;
+        let obstacleSpawnTimer = 0;
+        let obstacleSpawnInterval = 2200;
+        let initialObstacleSpeed = 3.0; // Başlangıç hızı biraz daha yavaş olabilir
+        let obstacleSpeed = initialObstacleSpeed; // Mevcut hız
+        let collectedItemsCount = 0;
+        let collectibleSpawnTimer = 0;
+        let collectibleSpawnInterval = 2800;
+        let counterFlashTimeout = null;
+
+        // --- Oyuncu Ayarları ---
+        const player = { x: 50, y: canvas.height - 60, width: 40, height: 50, speed: 5, dx: 0, dy: 0, gravity: 0.6, jumpPower: -12.5, isJumping: false, onGround: true, hitFlashDuration: 100, hitTimer: 0 };
+
+        // --- Engeller, Ürünler & Bitiş ---
+        let obstacles = [];
+        let collectibles = [];
+        const finishLine = { x: canvas.width * 70, width: 20, height: canvas.height, color: '#ffffff', reached: false }; // *** Bitiş çizgisi çok daha uzakta ***
+        const PRODUCT_TYPES = ["Ticari Kart", "Tahsil Çeki", "Ödeme Çeki", "Üye İşyeri", "Dış Ticaret", "DBS"];
+        const COLLECTIBLE_WIDTH = 36;
+        const COLLECTIBLE_HEIGHT = 28;
+        const OBSTACLE_ESNAF_WIDTH = 50;
+        const OBSTACLE_ESNAF_HEIGHT = 60;
+
+        // --- Parallax Arka Plan ---
+        let backgroundLayers = [];
+        const PARALLAX_ELEMENT_SPREAD = 3;
+
+        // --- Klavye Kontrolü ---
+        const keys = {};
+        document.addEventListener('keydown', (e) => { keys[e.code] = true; if (e.code === 'Space' && player.onGround && !player.isJumping && !isGameOver) { player.dy = player.jumpPower; player.isJumping = true; player.onGround = false; } });
+        document.addEventListener('keyup', (e) => { keys[e.code] = false; });
+
+        // --- Yardımcı Fonksiyonlar ---
+        function showScreen(screenElement) { document.querySelectorAll('.screen').forEach(s => s.classList.remove('active')); screenElement.classList.add('active'); gameOverMessageDiv.style.display = 'none'; }
+        function escapeHTML(str) { if (!str) return ''; const div = document.createElement('div'); div.appendChild(document.createTextNode(str)); return div.innerHTML; }
+        function randomBetween(min, max) { return Math.random() * (max - min) + min; }
+        function lightenDarkenColor(col, amt) { let usePound = false; if (col[0] == "#") { col = col.slice(1); usePound = true; } let num = parseInt(col,16); let r = (num >> 16) + amt; if (r > 255) r = 255; else if (r < 0) r = 0; let b = ((num >> 8) & 0x00FF) + amt; if (b > 255) b = 255; else if (b < 0) b = 0; let g = (num & 0x0000FF) + amt; if (g > 255) g = 255; else if (g < 0) g = 0; return (usePound?"#":"") + (g | (b << 8) | (r << 16)).toString(16).padStart(6, '0'); }
+
+        // --- İkon Çizim Fonksiyonları ---
+        function _drawSpecificIcon(ctx, type, x, y, w, h, addEffect = false) { ctx.save(); ctx.translate(x, y); ctx.imageSmoothingEnabled = false; if (addEffect) { ctx.shadowColor = 'rgba(255, 255, 220, 0.9)'; ctx.shadowBlur = 8; ctx.strokeStyle = '#FFFF99'; ctx.lineWidth = 2; ctx.strokeRect(-1, -1, w + 2, h + 2); } switch (type) { case 'Ticari Kart': ctx.fillStyle = '#0077cc'; ctx.fillRect(0, 0, w, h); ctx.fillStyle = '#ffd700'; ctx.fillRect(w*0.15, h*0.15, w*0.3, h*0.3); break; case 'Tahsil Çeki': ctx.fillStyle = '#adebad'; ctx.fillRect(0, 0, w, h); ctx.fillStyle = '#006400'; ctx.fillRect(w*0.1, h*0.7, w*0.8, h*0.1); ctx.fillRect(w*0.1, h*0.2, w*0.7, h*0.05); ctx.fillRect(w*0.1, h*0.4, w*0.8, h*0.05); break; case 'Ödeme Çeki': ctx.fillStyle = '#ffdab9'; ctx.fillRect(0, 0, w, h); ctx.strokeStyle = '#cc0000'; ctx.lineWidth = Math.max(1, w*0.1); ctx.beginPath(); ctx.moveTo(w*0.1, h*0.1); ctx.lineTo(w*0.9, h*0.9); ctx.moveTo(w*0.9, h*0.1); ctx.lineTo(w*0.1, h*0.9); ctx.stroke(); break; case 'Üye İşyeri': ctx.fillStyle = '#a0522d'; ctx.fillRect(w*0.1, h*0.4, w*0.8, h*0.6); ctx.fillStyle = '#d9534f'; ctx.beginPath(); ctx.moveTo(w/2, 0); ctx.lineTo(w*0.05, h*0.4); ctx.lineTo(w*0.95, h*0.4); ctx.closePath(); ctx.fill(); ctx.fillStyle = '#ffffff'; ctx.fillRect(w*0.05, h*0.4, w*0.45, h*0.15); ctx.fillStyle = '#f0ad4e'; ctx.fillRect(w*0.5, h*0.4, w*0.45, h*0.15); break; case 'Dış Ticaret': ctx.fillStyle = '#add8e6'; ctx.fillRect(0, h*0.6, w, h*0.4); ctx.fillStyle = '#0077b6'; ctx.fillRect(0, h*0.5, w, h*0.2); ctx.fillStyle = '#808080'; ctx.fillRect(w*0.1, h*0.3, w*0.8, h*0.3); ctx.fillStyle = '#d9534f'; ctx.fillRect(w*0.15, h*0.1, w*0.2, h*0.2); ctx.fillStyle = '#f0ad4e'; ctx.fillRect(w*0.4, h*0.1, w*0.2, h*0.2); ctx.fillStyle = '#5cb85c'; ctx.fillRect(w*0.65, h*0.1, w*0.2, h*0.2); break; case 'DBS': ctx.fillStyle = '#6c757d'; ctx.fillRect(w*0.05, h*0.3, w*0.9, h*0.7); ctx.fillStyle = '#495057'; ctx.fillRect(0, h*0.2, w, h*0.2); ctx.fillStyle = '#495057'; ctx.fillRect(w*0.2, 0, w*0.2, h*0.3); ctx.fillRect(w*0.6, 0, w*0.2, h*0.3); ctx.fillStyle = '#f8f9fa'; ctx.fillRect(w*0.25, 0, w*0.1, h*0.1); ctx.fillRect(w*0.65, 0, w*0.1, h*0.1); break; } ctx.shadowBlur = 0; ctx.shadowColor = 'transparent'; ctx.lineWidth = 1; ctx.strokeStyle = 'transparent'; ctx.restore(); }
+        function drawProductIcon(canvas, productName) { try { const ctxIcon = canvas.getContext('2d'); if (!ctxIcon) return; ctxIcon.clearRect(0, 0, canvas.width, canvas.height); _drawSpecificIcon(ctxIcon, productName, 0, 0, canvas.width, canvas.height, false); } catch (e) { console.error(`Buton ikonu çizilemedi (${productName}):`, e); } }
+        function drawAllProductIcons() { try { productIcons.forEach(canvas => { const productName = canvas.dataset.product; if (productName) { drawProductIcon(canvas, productName); } }); console.log("Ürün buton ikonları çizildi."); } catch(e) { console.error("drawAllProductIcons sırasında hata:", e); } }
+        function drawCollectibleIcon(ctx, collectible) { try { _drawSpecificIcon(ctx, collectible.type, collectible.x, collectible.y, collectible.width, collectible.height, true); } catch (e) { console.error(`Toplanabilir ikon çizilemedi (${collectible.type}):`, e); } }
+
+        // --- Sayaç Flash Efekti ---
+        function triggerCounterFlash() { if (counterFlashTimeout) clearTimeout(counterFlashTimeout); collectibleCounterDisplay.classList.add('flash'); counterFlashTimeout = setTimeout(() => { collectibleCounterDisplay.classList.remove('flash'); counterFlashTimeout = null; }, 200); }
+
+        // --- İsim Giriş Mantığı ---
+        submitNameBtn.addEventListener('click', handleNameSubmit);
+        playerNameInput.addEventListener('keypress', (e) => { if (e.key === 'Enter') handleNameSubmit(); });
+        function handleNameSubmit() { const name = playerNameInput.value.trim(); if (name && name.length > 1) { playerName = name; try { drawAllProductIcons(); showScreen(productScreen); } catch (error) { console.error("İsim onaylama sonrası hata:", error); alert("Bir hata oluştu."); } } else { alert('Lütfen geçerli bir ad ve soyad girin (en az 2 karakter).'); playerNameInput.focus(); } }
+
+        // --- Ürün Seçim Mantığı ---
+        productBoxes.forEach(box => { box.addEventListener('click', () => { selectedProduct = box.getAttribute('data-product'); if(!PRODUCT_TYPES.includes(selectedProduct)) { console.error("Geçersiz ürün seçildi:", selectedProduct); return; } startGame(); }); });
+
+        // --- Oyun Başlatma ---
+        function startGame() { console.log(`Oyun başlıyor - Oyuncu: ${playerName}, Seçilen Ürün: ${selectedProduct}`); resetGame(); setTheme(); showScreen(gameScreen); collectibleCounterDisplay.textContent = `${selectedProduct}: 0`; startTime = Date.now(); lastFrameTime = startTime; isGameOver = false; if (gameInterval) cancelAnimationFrame(gameInterval); gameInterval = requestAnimationFrame(gameLoop); console.log("Oyun döngüsü başlatıldı. Hız: " + obstacleSpeed); }
+
+        // --- Oyunu Sıfırlama ---
+        function resetGame() {
+            if (gameInterval) { cancelAnimationFrame(gameInterval); gameInterval = null; }
+            isGameOver = true;
+            // Zorluk bayraklarını sıfırla
+            difficultyIncreased1 = false; difficultyIncreased2 = false; difficultyIncreased3 = false;
+            obstacles = []; collectibles = []; backgroundLayers = [];
+            obstacleSpawnTimer = 0; collectibleSpawnTimer = 0; obstacleSpawnInterval = 2200; collectibleSpawnInterval = 2800;
+            obstacleSpeed = initialObstacleSpeed; // Hızı başlangıç değerine döndür
+            collectedItemsCount = 0; finishLine.reached = false;
+            finishLine.x = canvas.width * 70; // *** Bitiş çizgisini uzağa ayarla ***
+            player.x = 50; player.y = canvas.height - player.height - 10; player.dy = 0; player.dx = 0; player.isJumping = false; player.onGround = true; player.hitTimer = 0;
+            timerDisplay.textContent = `Süre: 0.0s`; collectibleCounterDisplay.textContent = `Ürün: 0`;
+            startTime = 0; endTime = 0; ctx.clearRect(0, 0, canvas.width, canvas.height); gameOverMessageDiv.style.display = 'none'; collectibleCounterDisplay.classList.remove('flash');
+            console.log("Oyun sıfırlandı. Bitiş çizgisi X:", finishLine.x);
+        }
+
+        // --- Tema ve Arka Plan Ayarlama ---
+        function setTheme() { let skyColor1 = '#87CEEB', skyColor2 = '#B0E0E6'; let distantSeaColor = '#4682B4'; let nearSeaColor1 = '#5F9EA0', nearSeaColor2 = '#66CDAA'; let beachColor1 = '#F0E68C', beachColor2 = '#FFE4B5'; let palmTrunkColor = '#A0522d', palmLeafColor = '#2E8B57'; let shipHullColor = '#808080', shipDetailColor = '#A9A9A9'; let palmConfig = { count: 6, minHeight: 60, maxHeight: 110 }; let shipConfig = { distantCount: 3, nearCount: 2 }; switch (selectedProduct) { case 'Ticari Kart': skyColor1 = '#4da6ff'; skyColor2 = '#80bfff'; nearSeaColor1 = '#0077cc'; nearSeaColor2 = '#0088e0'; beachColor1 = '#ffe066'; beachColor2 = '#ffd11a'; palmConfig.count = 4; shipConfig = { distantCount: 1, nearCount: 1 }; break; case 'Tahsil Çeki': skyColor1 = '#90ee90'; skyColor2 = '#b3ffb3'; distantSeaColor = '#20B2AA'; nearSeaColor1 = '#3CB371'; nearSeaColor2 = '#66CDAA'; palmLeafColor = '#008000'; break; case 'Ödeme Çeki': skyColor1 = '#ffb366'; skyColor2 = '#ffcc99'; distantSeaColor = '#CD853F'; nearSeaColor1 = '#D2691E'; nearSeaColor2 = '#FF7F50'; beachColor1 = '#FFDEAD'; beachColor2 = '#F5DEB3'; shipHullColor = '#505050'; palmConfig.count = 7; break; case 'Üye İşyeri': skyColor1 = '#87CEFA'; skyColor2 = '#B0E0E6'; nearSeaColor1 = '#40E0D0'; nearSeaColor2 = '#48D1CC'; beachColor1 = '#FFF8DC'; beachColor2 = '#FAFAD2'; palmTrunkColor = '#D2B48C'; palmLeafColor = '#98FB98'; shipConfig = { distantCount: 0, nearCount: 1 }; break; case 'Dış Ticaret': skyColor1 = '#B0C4DE'; skyColor2 = '#C0D0E0'; distantSeaColor = '#708090'; nearSeaColor1 = '#607080'; nearSeaColor2 = '#506070'; beachColor1 = '#D3D3D3'; beachColor2 = '#C0C0C0'; shipHullColor = '#696969'; shipDetailColor = '#808080'; palmConfig.count = 3; shipConfig = { distantCount: 5, nearCount: 4 }; break; case 'DBS': skyColor1 = '#ff8533'; skyColor2 = '#ffa366'; distantSeaColor = '#4db8ff'; nearSeaColor1 = '#1a8cff'; nearSeaColor2 = '#0073e6'; beachColor1 = '#ffff99'; beachColor2 = '#ffffcc'; palmConfig.count = 5; break; } backgroundLayers = []; const palmElements = generatePalms(palmConfig.count, palmConfig.minHeight, palmConfig.maxHeight); const distantShipElements = generateShips(shipConfig.distantCount, true, shipHullColor, shipDetailColor); const nearShipElements = generateShips(shipConfig.nearCount, false, shipHullColor, shipDetailColor); backgroundLayers.push( createLayer(0, drawSky, { color1: skyColor1, color2: skyColor2 }) ); backgroundLayers.push( createLayer(0.15, drawDistantSea, { color: distantSeaColor, elements: distantShipElements }) ); backgroundLayers.push( createLayer(0.3, drawNearSea, { color1: nearSeaColor1, color2: nearSeaColor2, elements: nearShipElements }) ); backgroundLayers.push( createLayer(0.6, drawBeach, { color1: beachColor1, color2: beachColor2 }) ); backgroundLayers.push( createLayer(0.9, drawPalms, { trunkColor: palmTrunkColor, leafColor: palmLeafColor, elements: palmElements }) ); canvas.style.backgroundColor = skyColor1; console.log(`Tema '${selectedProduct}' için ayarlandı.`); }
+        function createLayer(speedFactor, drawFunc, config = {}) { return { speedFactor: speedFactor, drawFunc: drawFunc, config: config, offset: 0 }; }
+        function generatePalms(count, minH, maxH) { let p = []; const totalWidth = canvas.width * PARALLAX_ELEMENT_SPREAD; for (let i = 0; i < count; i++) {p.push({ x: randomBetween(0, totalWidth), height: randomBetween(minH, maxH) });} p.sort((a, b) => a.x - b.x); return p; }
+        function generateShips(count, isDistant, hullColor, detailColor) { let s = []; const totalWidth = canvas.width * PARALLAX_ELEMENT_SPREAD; for (let i = 0; i < count; i++) {s.push({ x: randomBetween(0, totalWidth), scale: isDistant ? randomBetween(0.5, 0.9) : randomBetween(0.8, 1.2), type: Math.random() < 0.4 ? 'cargo' : 'simple', hullColor: hullColor, detailColor: detailColor });} s.sort((a, b) => a.x - b.x); return s; }
+
+        // --- Arka Plan Katmanı Çizim Fonksiyonları ---
+        function drawSky(ctx, layerConfig, offsetX) { const config = layerConfig.config; const grad = ctx.createLinearGradient(0, 0, 0, canvas.height * 0.5); grad.addColorStop(0, config.color1); grad.addColorStop(1, config.color2); ctx.fillStyle = grad; ctx.fillRect(0, 0, canvas.width, canvas.height * 0.5); }
+        function drawDistantSea(ctx, layerConfig, offsetX) { const config = layerConfig.config; const seaLevel = canvas.height * 0.45; ctx.fillStyle = config.color; ctx.fillRect(0, seaLevel, canvas.width, canvas.height * 0.15); drawShips(ctx, config.elements, seaLevel + 5, offsetX, true); }
+        function drawNearSea(ctx, layerConfig, offsetX) { const config = layerConfig.config; const seaLevel = canvas.height * 0.55; const waveHeight = 4; ctx.fillStyle = config.color1; ctx.fillRect(0, seaLevel, canvas.width, canvas.height * 0.25); ctx.fillStyle = config.color2; for (let x = 0; x < canvas.width; x += 20) { ctx.fillRect(x + (offsetX % 20), seaLevel + waveHeight + Math.sin((x*0.1+offsetX*0.02))*waveHeight/2, 10, 3); } drawShips(ctx, config.elements, seaLevel + 15, offsetX, false); }
+        function drawBeach(ctx, layerConfig, offsetX) { const config = layerConfig.config; const beachLevel = canvas.height * 0.75; ctx.fillStyle = config.color1; ctx.fillRect(0, beachLevel, canvas.width, canvas.height * 0.25); ctx.fillStyle = config.color2; for (let i = 0; i < 150; i++) { const dotX = (offsetX + randomBetween(0, canvas.width * 1.5)) % canvas.width; ctx.fillRect(dotX, beachLevel + randomBetween(0, canvas.height * 0.25), randomBetween(1, 3), randomBetween(1, 3)); } }
+        // Güncellenmiş Palmiye Çizimi
+        function drawPalms(ctx, layerConfig, offsetX) {
+             const config = layerConfig.config; const groundY = canvas.height - 5;
+             const trunkColor1 = config.trunkColor; const trunkColor2 = lightenDarkenColor(trunkColor1, -30);
+             const leafColor1 = '#32CD32'; const leafColor2 = '#228B22'; // Daha canlı yeşiller
+             config.elements.forEach(palm => {
+                 const totalWidth = canvas.width * PARALLAX_ELEMENT_SPREAD; const drawX = (offsetX + palm.x + totalWidth) % totalWidth;
+                 const palmHeight = palm.height; const trunkWidth = Math.max(5, palmHeight * 0.09);
+                 if (drawX > -trunkWidth && drawX < canvas.width + trunkWidth) {
+                     // Gövde (Dikey çizgili doku)
+                     ctx.fillStyle = trunkColor1;
+                     ctx.fillRect(drawX - trunkWidth / 2, groundY - palmHeight, trunkWidth, palmHeight);
+                     ctx.fillStyle = trunkColor2;
+                     for(let dy=0; dy < palmHeight; dy+=4) { ctx.fillRect(drawX - trunkWidth*0.1, groundY - palmHeight + dy, trunkWidth*0.2, 2); }
+
+                     // Yapraklar (Daha bol ve sarkık)
+                     const leafY = groundY - palmHeight + 5; const leafBaseLength = palmHeight * 0.55; const leafCount = 8;
+                     for(let i=0; i<leafCount; i++) {
+                         ctx.fillStyle = i % 2 === 0 ? leafColor1 : leafColor2; const angle = (i / leafCount) * Math.PI * 1.7 - Math.PI * 0.85; const length = leafBaseLength * (1 - Math.abs(angle) / (Math.PI * 0.9)); const xEnd = drawX + Math.cos(angle) * length; const yEnd = leafY + Math.sin(angle) * length * 0.7; const segments = 7;
+                         for(let j=0; j<segments; j++) { const t = j / segments; const tx = drawX + (xEnd - drawX) * t; const ty = leafY + (yEnd - leafY) * (t * t * 1.2); // Daha belirgin eğim
+                             const segWidth = Math.max(2, trunkWidth * 0.7 * (1-t)); ctx.fillRect(tx - segWidth / 2, ty - segWidth/2, segWidth, segWidth*1.3); }
+                     }
+                 }
+             });
+         }
+        function drawShips(ctx, ships, baseY, offsetX, isDistant) { ships.forEach(ship => { const totalWidth = canvas.width * PARALLAX_ELEMENT_SPREAD; const drawX = (offsetX + ship.x + totalWidth) % totalWidth; const scale = ship.scale; const hullColor = ship.hullColor; const detailColor = ship.detailColor; const baseWidth = isDistant ? 40 : 60; const baseHeight = isDistant ? 10 : 15; const cabinHeight = isDistant ? 8 : 12; const cabinWidth = baseWidth * 0.5; if (drawX + baseWidth * scale > 0 && drawX < canvas.width + baseWidth*scale) { if (ship.type === 'simple') { ctx.fillStyle = hullColor; ctx.fillRect(drawX, baseY - baseHeight * scale, baseWidth * scale, baseHeight * scale); ctx.fillStyle = detailColor; ctx.fillRect(drawX + (baseWidth * scale - cabinWidth * scale) / 2, baseY - (baseHeight + cabinHeight) * scale, cabinWidth * scale, cabinHeight * scale); } else { ctx.fillStyle = hullColor; ctx.fillRect(drawX, baseY - baseHeight * scale * 1.2, baseWidth * scale, baseHeight * scale * 1.2); ctx.fillStyle = detailColor; ctx.fillRect(drawX + baseWidth*0.1*scale, baseY - (baseHeight*1.2 + cabinHeight*0.8)*scale, baseWidth*0.8*scale, cabinHeight*0.8*scale ); ctx.fillStyle = hullColor; ctx.fillRect(drawX + baseWidth*0.7*scale, baseY - (baseHeight*1.2 + cabinHeight*1.5)*scale, baseWidth*0.25*scale, cabinHeight*1.5*scale ); } } }); }
+
+        // --- Esnaf Engel Çizimi ---
+        function drawObstacle_Esnaf(ctx, x, y, width, height) { ctx.save(); ctx.translate(x, y); ctx.imageSmoothingEnabled = false; const skin = '#f0c8a1'; const hair = '#221100'; const shirt = '#ffffff'; const vest = '#40E0D0'; const pants = '#5C4033'; const headH = height * 0.25; const headW = width * 0.6; const bodyY = headH; const bodyH = height * 0.45; const pantsY = bodyY + bodyH; const pantsH = height - pantsY; const armW = width * 0.15; const legW = width * 0.4; const legGap = width * 0.1; ctx.fillStyle = pants; ctx.fillRect((width - legW*2 - legGap)/2, pantsY, legW, pantsH); ctx.fillRect((width + legGap)/2, pantsY, legW, pantsH); ctx.fillStyle = vest; ctx.fillRect(0, bodyY, width, bodyH); ctx.fillStyle = shirt; ctx.fillRect(width * 0.2, bodyY, width * 0.6, bodyH * 0.8); ctx.fillStyle = shirt; ctx.fillRect(-armW*0.6, bodyY + bodyH*0.1, armW, bodyH * 0.5); ctx.fillRect(width - armW*0.4, bodyY + bodyH*0.1, armW, bodyH * 0.5); ctx.fillStyle = skin; ctx.fillRect(-armW*0.6, bodyY + bodyH*0.6, armW, bodyH * 0.3); ctx.fillRect(width - armW*0.4, bodyY + bodyH*0.6, armW, bodyH * 0.3); ctx.fillStyle = skin; ctx.fillRect((width - headW)/2, 0, headW, headH); ctx.fillStyle = hair; ctx.fillRect((width - headW)/2, 0, headW, headH * 0.3); ctx.fillRect(width*0.2, headH * 0.3, width*0.6, headH * 0.15); ctx.fillRect(width*0.25, headH * 0.45, width*0.5, headH * 0.1); ctx.fillStyle = hair; ctx.fillRect(width*0.3, headH*0.6, width*0.4, headH*0.25); ctx.restore(); }
+
+        // --- Engel Oluşturma (Esnaf) ---
+        function spawnObstacle() { const obsWidth = OBSTACLE_ESNAF_WIDTH; const obsHeight = OBSTACLE_ESNAF_HEIGHT; const obsY = canvas.height - obsHeight - 5; obstacles.push({ x: canvas.width + obsWidth, y: obsY, width: obsWidth, height: obsHeight, type: 'esnaf' }); }
+
+        // --- Toplanabilir Ürün Oluşturma (Sadece Seçileni, Yüksekliği Ayarlı) ---
+        function spawnCollectible() { if (!selectedProduct) return; const type = selectedProduct; const y = randomBetween(canvas.height * 0.5, canvas.height * 0.8); // *** Daha alçakta spawn ***
+            const x = canvas.width + COLLECTIBLE_WIDTH; collectibles.push({ x: x, y: y, width: COLLECTIBLE_WIDTH, height: COLLECTIBLE_HEIGHT, type: type }); }
+
+        // --- Oyun Mantığını Güncelleme ---
+        function update(deltaTime) {
+            if (isGameOver) return;
+            const dtMultiplier = deltaTime / 16.67;
+
+            // Arka Plan Hareketi
+            backgroundLayers.forEach(layer => { if (layer.speedFactor > 0) { const scrollAmount = layer.speedFactor * obstacleSpeed * dtMultiplier; layer.offset -= scrollAmount; const resetThreshold = -canvas.width * PARALLAX_ELEMENT_SPREAD; if (layer.offset <= resetThreshold) { layer.offset %= resetThreshold; layer.offset += resetThreshold; } } });
+
+            // Oyuncu Hareketi
+            player.dy += player.gravity; player.y += player.dy * dtMultiplier; player.onGround = false; const groundLevel = canvas.height - 5; if (player.y + player.height >= groundLevel) { player.y = groundLevel - player.height; player.dy = 0; player.isJumping = false; player.onGround = true; } player.dx = 0; if (keys['ArrowLeft'] && player.x > 0) player.dx = -player.speed; if (keys['ArrowRight'] && player.x < canvas.width - player.width) player.dx = player.speed / 1.5; player.x += player.dx * dtMultiplier; if (player.x < 0) player.x = 0; if (player.x + player.width > canvas.width) player.x = canvas.width - player.width; if (player.hitTimer > 0) { player.hitTimer -= deltaTime; if (player.hitTimer < 0) player.hitTimer = 0; }
+
+            // Engel Spawn & Hareket & Çarpışma
+            obstacleSpawnTimer += deltaTime; if (obstacleSpawnTimer >= obstacleSpawnInterval) { spawnObstacle(); obstacleSpawnTimer = 0; }
+            for (let i = obstacles.length - 1; i >= 0; i--) { const obs = obstacles[i]; obs.x -= obstacleSpeed * dtMultiplier; if (player.hitTimer <= 0 && player.x < obs.x + obs.width && player.x + player.width > obs.x && player.y < obs.y + obs.height && player.y + player.height > obs.y) { handleCollision(obs); return; } if (obs.x + obs.width < -100) { obstacles.splice(i, 1); } }
+
+            // Toplanabilir Ürün Spawn & Hareket & Toplama
+            collectibleSpawnTimer += deltaTime; if (collectibleSpawnTimer >= collectibleSpawnInterval) { spawnCollectible(); collectibleSpawnTimer = 0; }
+            for (let i = collectibles.length - 1; i >= 0; i--) { const item = collectibles[i]; item.x -= obstacleSpeed * dtMultiplier; if (item.type === selectedProduct && player.x < item.x + item.width && player.x + player.width > item.x && player.y < item.y + item.height && player.y + player.height > item.y) { collectedItemsCount++; collectibleCounterDisplay.textContent = `${selectedProduct}: ${collectedItemsCount}`; // *** Doğru sayaç metni ***
+                triggerCounterFlash(); collectibles.splice(i, 1); } else if (item.x + item.width < -50) { collectibles.splice(i, 1); } }
+
+            // Bitiş Çizgisi Hareketi & Kontrolü
+            finishLine.x -= obstacleSpeed * dtMultiplier;
+            if (!finishLine.reached && player.x + player.width > finishLine.x) { finishLine.reached = true; console.log("Bitiş çizgisine ulaşıldı!"); endGame(true); return; }
+
+            // Kademeli Zorluk Artışı
+            const elapsedTime = Date.now() - startTime;
+            if (!difficultyIncreased1 && elapsedTime >= difficultyIncreaseTime1) {
+                const oldSpeed = obstacleSpeed;
+                obstacleSpeed *= difficultyMultiplier1;
+                obstacleSpawnInterval /= difficultyMultiplier1; if (obstacleSpawnInterval < 800) obstacleSpawnInterval = 800; // Min interval
+                collectibleSpawnInterval /= 1.1; if (collectibleSpawnInterval < 1800) collectibleSpawnInterval = 1800;
+                difficultyIncreased1 = true;
+                console.log(`ZORLUK 1! Süre: ${Math.round(elapsedTime/1000)}s Hız: ${oldSpeed.toFixed(1)}->${obstacleSpeed.toFixed(1)}`);
+            } else if (!difficultyIncreased2 && elapsedTime >= difficultyIncreaseTime2) {
+                 const oldSpeed = obstacleSpeed;
+                 obstacleSpeed *= difficultyMultiplier2;
+                 obstacleSpawnInterval /= difficultyMultiplier2; if (obstacleSpawnInterval < 600) obstacleSpawnInterval = 600;
+                 collectibleSpawnInterval /= 1.1; if (collectibleSpawnInterval < 1500) collectibleSpawnInterval = 1500;
+                 difficultyIncreased2 = true;
+                 console.log(`ZORLUK 2! Süre: ${Math.round(elapsedTime/1000)}s Hız: ${oldSpeed.toFixed(1)}->${obstacleSpeed.toFixed(1)}`);
+            } else if (!difficultyIncreased3 && elapsedTime >= difficultyIncreaseTime3) {
+                 const oldSpeed = obstacleSpeed;
+                 obstacleSpeed *= difficultyMultiplier3;
+                 obstacleSpawnInterval /= difficultyMultiplier3; if (obstacleSpawnInterval < 500) obstacleSpawnInterval = 500; // En zor seviye min interval
+                 collectibleSpawnInterval /= 1.1; if (collectibleSpawnInterval < 1300) collectibleSpawnInterval = 1300;
+                 difficultyIncreased3 = true;
+                 console.log(`ZORLUK 3 (SON)! Süre: ${Math.round(elapsedTime/1000)}s Hız: ${oldSpeed.toFixed(1)}->${obstacleSpeed.toFixed(1)}`);
+            }
+        }
+
+        // --- Çarpışma Yönetimi (Oyun Biter) ---
+        function handleCollision(obstacle) { if (isGameOver) return; console.log("ENGELE ÇARPILDI! Oyun Bitti."); player.hitTimer = player.hitFlashDuration; endGame(false); }
+
+        // --- Ana Çizim Fonksiyonu ---
+        function draw() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height); ctx.imageSmoothingEnabled = false;
+            // 1. Arka Plan
+            backgroundLayers.forEach(layer => { const patternWidth = canvas.width * PARALLAX_ELEMENT_SPREAD; const effectiveOffset = layer.offset % patternWidth; layer.drawFunc(ctx, layer, effectiveOffset); layer.drawFunc(ctx, layer, effectiveOffset + patternWidth); layer.drawFunc(ctx, layer, effectiveOffset - patternWidth); });
+            // 2. Engeller (Esnaf)
+            obstacles.forEach(obs => { drawObstacle_Esnaf(ctx, obs.x, obs.y, obs.width, obs.height); });
+            // 3. Toplanabilir Ürünler (Parlak)
+            collectibles.forEach(item => { drawCollectibleIcon(ctx, item); });
+            // 4. Bitiş Çizgisi
+            if (finishLine.x < canvas.width + 50) { ctx.fillStyle = finishLine.color; ctx.fillRect(finishLine.x, 0, finishLine.width, finishLine.height); ctx.fillStyle = '#000'; for (let y = 0; y < finishLine.height; y += 20) { const xOffsetPatternStart = Math.floor(finishLine.x / 10) % 2; for (let xOffset = 0; xOffset < finishLine.width; xOffset += 10) { if ((Math.floor(xOffset / 10) + xOffsetPatternStart) % 2 !== Math.floor(y / 20) % 2) { ctx.fillRect(finishLine.x + xOffset, y, 10, 20);}}}}
+            // 5. Oyuncu (Bankacı)
+            ctx.globalAlpha = 1; if (player.hitTimer > 0) { ctx.globalAlpha = (Math.floor(player.hitTimer / 50) % 2 === 0) ? 0.5 : 1.0; }
+            const skinTone = '#f0c8a1'; const suitColor = '#3a3a4a'; const shirtColor = '#ffffff'; const tieColor = '#b00000'; const headHeight = player.height * 0.25; const headWidth = player.width * 0.6; const bodyY = player.y + headHeight; const bodyHeight = player.height - headHeight; const shirtWidth = player.width * 0.4; const shirtHeight = bodyHeight * 0.4; const tieWidth = player.width * 0.15; const legWidth = player.width * 0.35; const legGap = player.width * 0.1; ctx.fillStyle = suitColor; ctx.fillRect(player.x, bodyY, player.width, bodyHeight * 0.6); const trouserY = bodyY + bodyHeight * 0.55; const trouserHeight = bodyHeight * 0.45; ctx.fillRect(player.x + (player.width - legWidth*2 - legGap)/2 , trouserY, legWidth, trouserHeight); ctx.fillRect(player.x + (player.width - legWidth*2 - legGap)/2 + legWidth + legGap, trouserY, legWidth, trouserHeight); ctx.fillStyle = skinTone; ctx.fillRect(player.x + (player.width - headWidth) / 2, player.y, headWidth, headHeight); ctx.fillStyle = shirtColor; ctx.fillRect(player.x + (player.width - shirtWidth) / 2, bodyY, shirtWidth, shirtHeight); ctx.fillStyle = tieColor; ctx.fillRect(player.x + (player.width - tieWidth) / 2, bodyY, tieWidth, shirtHeight * 1.1); const handSize = player.width * 0.15; const handY = bodyY + bodyHeight * 0.3; ctx.fillStyle = skinTone; ctx.fillRect(player.x - handSize * 0.5, handY, handSize, handSize * 1.2); ctx.fillRect(player.x + player.width - handSize * 0.5, handY, handSize, handSize * 1.2); ctx.globalAlpha = 1;
+            // 6. Süre ve Sayaç
+            updateTimerDisplay();
+        }
+
+        // --- Zamanlayıcı Güncelleme ---
+        function updateTimerDisplay() { let elapsedTime = 0; if (!isGameOver && startTime > 0) {elapsedTime = (Date.now() - startTime) / 1000;} else if (isGameOver && startTime > 0 && endTime > 0) {elapsedTime = (endTime - startTime) / 1000;} if (elapsedTime < 0) elapsedTime = 0; timerDisplay.textContent = `Süre: ${elapsedTime.toFixed(1)}s`; }
+
+        // --- Ana Oyun Döngüsü ---
+        function gameLoop(currentTime) { if (isGameOver) { if(gameInterval) { cancelAnimationFrame(gameInterval); gameInterval = null; } return; } if (!lastFrameTime) lastFrameTime = currentTime; const deltaTime = currentTime - lastFrameTime; lastFrameTime = currentTime; if (deltaTime <= 0) { gameInterval = requestAnimationFrame(gameLoop); return; } const maxDeltaTime = 100; const effectiveDeltaTime = Math.min(deltaTime, maxDeltaTime); try { update(effectiveDeltaTime); draw(); gameInterval = requestAnimationFrame(gameLoop); } catch (error) { console.error("Oyun döngüsünde hata:", error); isGameOver = true; alert("Beklenmedik bir hata oluştu! Oyun durduruldu."); displayLeaderboard(); showScreen(leaderboardScreen); } }
+
+        // --- Oyunu Bitirme ---
+        function endGame(success) { if (isGameOver) return; isGameOver = true; endTime = Date.now(); if (gameInterval) { cancelAnimationFrame(gameInterval); gameInterval = null; } if (endTime < startTime) endTime = startTime; const finalTime = (endTime - startTime) / 1000; console.log(`OYUN BİTTİ! Süre: ${finalTime.toFixed(1)}s, Başarılı: ${success}, Toplanan: ${collectedItemsCount}`); updateTimerDisplay(); if (success) { if (finalTime > 3) { saveScore(playerName, finalTime, collectedItemsCount); } else { console.log("Süre <3s, skor kaydedilmedi."); } displayLeaderboard(); showScreen(leaderboardScreen); } else { gameOverMessageDiv.querySelector('span').textContent = `Toplanan ${selectedProduct}: ${collectedItemsCount}`; gameOverMessageDiv.style.display = 'block'; setTimeout(() => { displayLeaderboard(); showScreen(leaderboardScreen); gameOverMessageDiv.style.display = 'none'; }, 3000); } }
+
+        // --- Liderlik Tablosu Yönetimi ---
+        const MAX_LEADERBOARD_ENTRIES = 10; function saveScore(name, time, count) { try {const scores = loadScores(); scores.push({ name: name, time: time, count: count }); scores.sort((a, b) => a.time - b.time); const topScores = scores.slice(0, MAX_LEADERBOARD_ENTRIES); localStorage.setItem('tabelaGameLeaderboard', JSON.stringify(topScores)); console.log("Skor kaydedildi:", topScores);} catch (error) {console.error("Skor kaydetme hatası:", error); } } function loadScores() { try {const scoresJSON = localStorage.getItem('tabelaGameLeaderboard'); return scoresJSON ? JSON.parse(scoresJSON) : [];} catch (error) {console.error("Skor yükleme hatası:", error); localStorage.removeItem('tabelaGameLeaderboard'); return [];} } function displayLeaderboard() { const scores = loadScores(); leaderboardBody.innerHTML = ''; if (scores.length === 0) {leaderboardBody.innerHTML = '<tr><td colspan="4" style="text-align:center; padding: 20px;">Henüz kayıtlı skor yok!</td></tr>'; return;} scores.forEach((score, index) => { const row = document.createElement('tr'); const countDisplay = score.count !== undefined ? score.count : '-'; row.innerHTML = `<td>${index + 1}</td><td>${escapeHTML(score.name)}</td><td>${score.time.toFixed(1)}s</td><td>${countDisplay}</td>`; leaderboardBody.appendChild(row);}); }
+
+        // --- Liderlik Tablosu Butonları ---
+        playAgainBtn.addEventListener('click', () => {showScreen(productScreen);});
+        quitBtn.addEventListener('click', () => {playerNameInput.value = ''; showScreen(nameScreen);});
+
+        // --- Başlangıç Ayarları ---
+        window.addEventListener('load', () => { showScreen(nameScreen); playerNameInput.focus(); console.log("TABELA Oyunu (vFinal) yüklendi."); });
+
+    </script>
+</body>
+</html>

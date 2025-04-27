@@ -1,0 +1,231 @@
+/* Genel Stiller ve Font */
+body {
+    background-color: #222;
+    color: #fff;
+    font-family: 'Press Start 2P', cursive; /* Piksel fontu */
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+    margin: 0;
+    overflow: hidden; /* Kaydırma çubuklarını gizle */
+    image-rendering: pixelated; /* Resimlerin pikselleşmesini sağla */
+    image-rendering: crisp-edges;
+}
+
+.screen {
+    display: none; /* Başlangıçta tüm ekranları gizle */
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    background-color: #333;
+    padding: 30px;
+    border: 4px solid #fff;
+    box-shadow: 0 0 0 4px #000; /* Çift çerçeve efekti */
+    min-width: 400px;
+}
+
+.active-screen {
+    display: flex; /* Aktif ekranı göster */
+}
+
+h1, h2 {
+    color: #ffcc00; /* Sarı başlıklar */
+    margin-bottom: 20px;
+    text-shadow: 2px 2px #000;
+}
+
+.pixel-logo {
+    font-size: 2.5em; /* Büyük logo */
+}
+
+/* Form Stilleri */
+#name-form label {
+    display: block;
+    margin-bottom: 10px;
+    font-size: 0.8em;
+}
+
+#name-form input[type="text"] {
+    background-color: #eee;
+    border: 2px solid #000;
+    padding: 8px;
+    font-family: 'Press Start 2P', cursive;
+    margin-bottom: 15px;
+    width: 80%;
+}
+
+button {
+    background-color: #4CAF50; /* Yeşil buton */
+    color: white;
+    border: 2px solid #000;
+    padding: 10px 20px;
+    font-family: 'Press Start 2P', cursive;
+    cursor: pointer;
+    text-transform: uppercase;
+    box-shadow: 2px 2px #000;
+    transition: background-color 0.2s;
+}
+
+button:hover {
+    background-color: #45a049;
+}
+
+button:active {
+    box-shadow: none;
+    transform: translate(2px, 2px);
+}
+
+/* Ana Menü Stilleri */
+.product-selection {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr); /* 3 sütunlu grid */
+    gap: 15px; /* Kutucuklar arası boşluk */
+    margin-top: 20px;
+}
+
+.product-button {
+    background-color: #0077cc; /* Mavi kutucuklar */
+    font-size: 0.7em;
+    padding: 15px 5px; /* Daha dar ama yüksek */
+}
+.product-button:hover {
+    background-color: #005fa3;
+}
+
+
+/* Oyun Alanı Stilleri */
+#game-screen {
+    background-color: #000; /* Oyun arka planı siyah */
+    border-color: #ffcc00; /* Sarı çerçeve */
+    padding: 10px;
+    position: relative; /* İç elemanları konumlandırmak için */
+}
+
+#game-area {
+    width: 600px; /* Oyun alanı genişliği */
+    height: 300px; /* Oyun alanı yüksekliği */
+    background-color: #55aaff; /* Varsayılan gökyüzü rengi */
+    border: 3px solid #fff;
+    position: relative;
+    overflow: hidden; /* Dışarı taşanları gizle */
+    margin-bottom: 10px;
+}
+
+#character {
+    width: 30px;
+    height: 50px;
+    background-color: #ff4500; /* Karakter rengi (turuncu) */
+    border: 2px solid #000;
+    position: absolute;
+    bottom: 10px; /* Zeminden başlama mesafesi */
+    left: 50px; /* Başlangıç konumu */
+    transition: bottom 0.2s ease-out; /* Yumuşak zıplama */
+    /* Takım elbise detayı için basit çizgi */
+    box-shadow: inset 0 -10px 0 0 #fff, inset 0 -12px 0 0 #000;
+}
+
+/* .jumping sınıfı için artık içi boş değil veya silebiliriz.
+   Şimdilik bir stil ekleyelim veya yorum satırı olarak bırakalım.
+   Uyarıyı gidermek için yorum olmayan bir şey olması yeterli. */
+.jumping {
+   /* Zıplama animasyonu için özel bir stil gerekirse buraya eklenebilir. */
+   /* Örneğin: outline: 1px solid yellow; */
+   opacity: 0.9; /* Geçici bir stil ekleyerek boş olmasını engelleyelim */
+}
+
+.obstacle {
+    background-color: #8B4513; /* Engel rengi (kahverengi) */
+    border: 2px solid #000;
+    position: absolute;
+    bottom: 10px; /* Engeller de zeminde */
+}
+
+/* Temalara göre arka planlar (Basit Renkler) */
+#game-area.theme-ticari-kart { background-color: #777; /* Gri şehir */ }
+#game-area.theme-tahsil-ceki { background-color: #e0e0e0; /* Açık gri - kağıt */ }
+#game-area.theme-odeme-ceki { background-color: #d0d0d0; /* Biraz koyu gri - kağıt */ }
+#game-area.theme-uye-isyeri { background-color: #90ee90; /* Açık yeşil - POS? */ }
+#game-area.theme-dis-ticaret { background-color: #1e90ff; /* Mavi - Liman */ }
+#game-area.theme-dbs { background-color: #ffa500; /* Turuncu - DBS? */ }
+
+/* Tema Bilgisi */
+#theme-info {
+    font-size: 0.7em;
+    margin-top: 5px;
+    color: #ccc;
+}
+#theme-info span {
+    color: #fff;
+    text-transform: capitalize; /* Tema adını büyük harfle başlat */
+}
+
+
+#timer-display {
+    font-size: 0.9em;
+    color: #ffcc00; /* Sarı timer */
+    text-align: right;
+    padding-right: 10px;
+}
+
+#finish-line { /* JS ile oluşturulacak bitiş çizgisi için temel stil */
+    width: 60px;
+    height: 100px;
+    background-color: #fff;
+    color: #000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.8em;
+    font-weight: bold;
+    border: 3px dashed #000;
+    bottom: 10px; /* Zeminde */
+    position: absolute; /* Konumlandırma için */
+}
+
+
+/* Liderlik Tablosu Stilleri */
+#leaderboard-list {
+    list-style-type: decimal; /* Numaralı liste */
+    padding-left: 40px; /* Numaralar için yer */
+    width: 80%;
+    margin-bottom: 20px;
+}
+
+#leaderboard-list li {
+    font-size: 0.8em;
+    margin-bottom: 8px;
+    text-align: left;
+    color: #fff;
+}
+
+#leaderboard-list li span {
+    color: #ffcc00; /* Skor rengi */
+    float: right; /* Sağa yasla */
+}
+
+.leaderboard-actions button {
+    margin: 0 10px;
+}
+
+/* Basit bankacılık temalı engel stilleri (Örnek) */
+.obstacle.pos {
+    width: 40px;
+    height: 35px;
+    background-color: #a9a9a9; /* Gri POS */
+}
+
+.obstacle.check {
+    width: 50px;
+    height: 25px;
+    background-color: #f5f5dc; /* Bej Çek */
+}
+
+.obstacle.pit { /* Çukur */
+    width: 50px;
+    height: 15px; /* Sadece zemin hizasında */
+    background-color: #333; /* Koyu renk */
+    border: none;
+    bottom: 0; /* Tam zeminde */
+}
